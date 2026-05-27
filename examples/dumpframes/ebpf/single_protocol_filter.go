@@ -3,7 +3,7 @@ package ebpf
 import (
 	"fmt"
 
-	"github.com/slavc/xdp"
+	"github.com/Servicewall/xdp"
 	"github.com/cilium/ebpf"
 )
 

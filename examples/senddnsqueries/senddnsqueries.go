@@ -15,7 +15,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/miekg/dns"
-	"github.com/slavc/xdp"
+	"github.com/Servicewall/xdp"
 	"github.com/vishvananda/netlink"
 )
 
