@@ -13,7 +13,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/slavc/xdp"
+	"github.com/Servicewall/xdp"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/vishvananda/netlink"

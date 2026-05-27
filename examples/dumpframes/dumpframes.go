@@ -6,7 +6,7 @@
 
 /*
 dumpframes demostrates how to receive frames from a network link using
-github.com/slavc/xdp package, it sets up an XDP socket attached to a
+github.com/Servicewall/xdp package, it sets up an XDP socket attached to a
 particular network link and dumps all frames it receives to standard output.
 */
 package main
@@ -18,8 +18,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/slavc/xdp"
-	"github.com/slavc/xdp/examples/dumpframes/ebpf"
+	"github.com/Servicewall/xdp"
+	"github.com/Servicewall/xdp/examples/dumpframes/ebpf"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )
