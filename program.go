@@ -1,7 +1,9 @@
 package xdp
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -9,6 +11,11 @@ import (
 	"github.com/cilium/ebpf/asm"
 	"github.com/vishvananda/netlink"
 )
+
+// DefaultProgramFlags is OR'd into ProgramSpec.Flags when loading the default
+// XDP program in NewProgram. Set to unix.BPF_F_XDP_HAS_FRAGS before calling
+// NewProgram to allow binding AF_XDP sockets with XDP_USE_SG (multi-buffer).
+var DefaultProgramFlags uint32
 
 // Program represents the necessary data structures for a simple XDP program that can filter traffic
 // based on the attached rx queue.
@@ -188,6 +195,9 @@ func NewProgram(maxQueueEntries int) (*Program, error) {
 	program, err := ebpf.NewProgram(&ebpf.ProgramSpec{
 		Name: "xsk_ebpf",
 		Type: ebpf.XDP,
+		// 显式声明 AttachType=AttachXDP；新内核在 prog_flags 包含 BPF_F_XDP_HAS_FRAGS 时
+		// 会校验 expected_attach_type 是否匹配，缺失则 pre-verifier EINVAL
+		AttachType: ebpf.AttachXDP,
 		Instructions: asm.Instructions{
 			{OpCode: 97, Dst: 1, Src: 1, Offset: 16},                                  // 0: code: 97 dst_reg: 1 src_reg: 1 off: 16 imm: 0   // 0
 			{OpCode: 99, Dst: 10, Src: 1, Offset: -4},                                 // 1: code: 99 dst_reg: 10 src_reg: 1 off: -4 imm: 0  // 1
@@ -211,9 +221,15 @@ func NewProgram(maxQueueEntries int) (*Program, error) {
 		},
 		License:       "LGPL-2.1 or BSD-2-Clause",
 		KernelVersion: 0,
+		Flags:         DefaultProgramFlags,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error: ebpf.NewProgram failed: %v", err)
+		var ve *ebpf.VerifierError
+		if errors.As(err, &ve) {
+			return nil, fmt.Errorf("ebpf.NewProgram failed: %v\nverifier log (%d lines, truncated=%v):\n%s",
+				err, len(ve.Log), ve.Truncated, strings.Join(ve.Log, "\n"))
+		}
+		return nil, fmt.Errorf("ebpf.NewProgram failed (no VerifierError, type=%T): %+v", err, err)
 	}
 
 	return &Program{Program: program, Queues: qidconfMap, Sockets: xsksMap}, nil
